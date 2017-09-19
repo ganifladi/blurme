@@ -28,10 +28,10 @@
 <p>To ddd another program, which will start the blur effect use the script like this:</p>
 <p><pre>~/.script/blurme -a rofi</pre></p>
 <h4>Custom working dir</h4>
-<p>The default working directory is set to <pre>~/.cache/blurme</pre>. If this bothers you for some reason (maybe you have connected this specific directory to your tmpfs), don't worry. You can simply apply another directory to the script with the option <pre>-d</pre></p>
+<p>The default working directory is set to <b>~/.cache/blurme</b>. If this bothers you for some reason (maybe you have connected this specific directory to your tmpfs), don't worry. You can simply apply another directory to the script with the option <b>-d</b></p>
 <p><pre>~/.scripts/blurme -d ~/.my/dream/directory</pre></p>
 <h4>Custom transition time</h4>
-<p>The transition time is measured in seconds and its default is <pre>0.01</pre>. If that's to fast for you, please consider the option <pre>-t</pre>.</p>
+<p>The transition time is measured in seconds and its default is <b>0.01</b>. If that's to fast for you, please consider the option <b>-t</b>.</p>
 <p><pre>~/.scripts/blurme -t 0.5</pre></p>
 <h4>Help</h4>
 <p>If you forgot all these parameters just typ:</p>
