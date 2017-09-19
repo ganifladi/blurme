@@ -22,9 +22,9 @@
 <h4>i3</h4>
 <p>Add the line "exec --no-startup-id ~/.scripts/blurme &" to your i3 config.</p>
 <h4>bspwm</h4>
-<p>Add the line "sh ~/.scripts/blurme" to ~/.xinitrc</p>
+<p>Add the line "sh ~/.scripts/blurme &" to ~/.xinitrc</p>
 <h4>openbox</h4>
-<p>Add the line "sh ~/.scripts/blurme" to ~/.config/openbox/autostart</p>
+<p>Add the line "sh ~/.scripts/blurme &" to ~/.config/openbox/autostart</p>
 <h3>Options</h3>
 <p>There are several optional arguments provided that may be used. These include:</p>
 <ul>
