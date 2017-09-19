@@ -5,3 +5,6 @@ blurme v1.0 Codename MEH (My Eyes Hurt) is a small script which will blur your f
 Please feel free to fork it, make pull requests and use it in your own projects.
 
 This is my first project i publish. Please be gentle on me :)
+
+<h2>How to start</h2>
+
