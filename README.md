@@ -24,15 +24,11 @@
 <h4>bspwm</h4>
 <h4>openbox</h4>
 <h3>Options</h3>
-<h4>I need more!</h4>
-<p>To ddd another program, which will start the blur effect use the script like this:</p>
-<p><pre>~/.script/blurme -a rofi</pre></p>
-<h4>Custom working dir</h4>
-<p>The default working directory is set to <b>~/.cache/blurme</b>. If this bothers you for some reason (maybe you have connected this specific directory to your tmpfs), don't worry. You can simply apply another directory to the script with the option <b>-d</b></p>
-<p><pre>~/.scripts/blurme -d ~/.my/dream/directory</pre></p>
-<h4>Custom transition time</h4>
-<p>The transition time is measured in seconds and its default is <b>0.01</b>. If that's to fast for you, please consider the option <b>-t</b>.</p>
-<p><pre>~/.scripts/blurme -t 0.5</pre></p>
-<h4>Help</h4>
-<p>If you forgot all these parameters just typ:</p>
-<p><pre>~/.scripts/blurme -h</pre></p>
+<p>There are several optional arguments that may be used provided. These include:</p>
+<ul>
+    <li><b>-a</b>: Add another program (process name), which will start the blur effect</li>
+    <li><b>-d</b>: Set custom directory (defaul ~/.cache/blurme)</li>
+    <li><b>-t</b>: Set custom transition time in sec (default: 0.01)</li>
+    <li><b>-v</b>: Show additional output (verbose)</li>
+    <li><b>-h</b>: Show all these parameters</li>
+</ul>
