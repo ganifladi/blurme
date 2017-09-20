@@ -1,8 +1,21 @@
 #!/bin/bash
 
-while getopts :a:d:t:vh option; do
+# Error Prevention: Multiple Instances ----------------------------------
+
+if [[ $(pgrep -cl blurme) > 1 ]]; then
+    echo 'BLURME: Another instance of blurme me is already running.'
+    echo '        Please kill it with fire (pkill blurme) first, then try running me again.'
+    exit
+fi
+
+
+
+# Options ---------------------------------------------------------------
+
+while getopts :a:c:d:t:vh option; do
     case "${option}" in
         a) ADDBLUR=${OPTARG};;
+        c) CACHEDIR=${OPTARG};;
         d) WORKINGDIR=${OPTARG};;
         t) TIME=${OPTARG};;
         v) VERBOSE=true;;
@@ -10,7 +23,8 @@ while getopts :a:d:t:vh option; do
             echo '---------------------------------------'
             echo 'BLURME v1.0 Codename MEH (My Eyes Hurt)'
             echo '---------------------------------------'
-            echo "Options : '-a' adds one additional program, which will start the blur effect (must be process name!)" 1>&2
+            echo "Options:  '-a' adds one additional program, which will start the blur effect (must be process name!)" 1>&2
+            echo "          '-c' set custom directory for transition images (default: ~/.cache/blurme)" 1>&2
             echo "          '-d' set custom directory (default: ~/.cache/blurme)" 1>&2
             echo "          '-t' set custom transition time in sec (default: 0.01)" 1>&2
             echo "          '-v' set verbose true" 1>&2
@@ -18,10 +32,11 @@ while getopts :a:d:t:vh option; do
             ;;
         \?)
             echo 'BLURME: Invalid option! Please use as shown below:' 1>&2
-            echo "BLURME: '-a' adds one additional program, which will start the blur effect (must be process name!)" 1>&2
-            echo "BLURME: '-d' set custom directory (default: ~/.cache/blurme)" 1>&2
-            echo "BLURME: '-t' set custom transition time in sec (default: 0.01)" 1>&2
-            echo "BLURME: '-v' set verbose true" 1>&2
+            echo "        '-a' adds one additional program, which will start the blur effect (must be process name!)" 1>&2
+            echo "        '-c' set custom directory for transition images (default: ~/.cache/blurme)" 1>&2
+            echo "        '-d' set custom directory (default: ~/.cache/blurme)" 1>&2
+            echo "        '-t' set custom transition time in sec (default: 0.01)" 1>&2
+            echo "        '-v' set verbose true" 1>&2
             exit
             ;;
         :) echo "BLURME: '-$OPTARG' requires an argument" 1>&2; exit;;
@@ -29,16 +44,44 @@ while getopts :a:d:t:vh option; do
 done
 shift $((OPTIND-1))
 
-if [ -z "$TIME" ]; then TIME=0.01; fi
 if [ "$VERBOSE" = true ]; then
     echo '---------------------------------------'
     echo 'BLURME v1.0 Codename MEH (My Eyes Hurt)'
     echo '---------------------------------------'
 fi
 
-if [ -z "$WORKINGDIR" ]; then WORKINGDIR=/home/$USER/.cache/blurme; fi
+
+
+# Variables -------------------------------------------------------------
+
+# Working directory contains a copy of the original unblured image,
+# and its path.
+if [ -z "$WORKINGDIR" ]; then WORKINGDIR=/home/$USER/.local/share/blurme; fi
 if ! [ -d $WORKINGDIR ]; then mkdir $WORKINGDIR; fi
 if [ "$VERBOSE" = true ]; then echo 'BLURME: Workingdir is set to '$WORKINGDIR; fi
+
+# Cache directory contains all blurry rendered transition images.
+if [ -z "$CACHEDIR" ]; then CACHEDIR=/home/$USER/.cache/blurme; fi
+if ! [ -d $CACHEDIR ]; then mkdir $CACHEDIR; fi
+if [ "$VERBOSE" = true ]; then echo 'BLURME: Cache (contains transition images) is set to '$CACHEDIR; fi
+
+
+# Error Prevention: Blurry startup
+#
+# Check if background is set to not blurred on start.
+# If for some reason the script wasn't terminated correctly,
+# the background might be still blurry, and the logic will go crazy.
+# This only fix only works when the workingdir and its containing
+# copy of the original not blurred background still exist
+# after reboot (no temp directory!).
+if [[ $(tail -n1 ~/.fehbg | cut -d "'" -f2) = "$CACHEDIR/trans-9" ]]; then
+    # Reset wallpaper to original one
+    feh --bg-fill $(cat "$WORKINGDIR/original-bg")
+fi
+
+
+if [ -z "$TIME" ]; then TIME=0.01; fi
+#echo "Transition time is set to: "$TIME
 
 CURRWORKSPACE=$(wmctrl -d | grep '*' | cut -d ' ' -f1)
 #echo "Current workspace: $CURRWORKSPACE"
@@ -56,6 +99,10 @@ COPYBG=$WORKINGDIR/copied-bg
 cp $(cat $ORIGINAL) $COPYBG
 
 
+
+
+
+
 # Functions -------------------------------------------------------------
 
 function create_images {
@@ -67,7 +114,7 @@ function create_images {
     while [ $i -lt "10" ]; do
         A=$(echo "($i + 1) * 2.4" | bc -l)
         B=$(echo "($i + 1) * 1.2" | bc -l)
-        convert $COPYBG -blur $A,$B $WORKINGDIR/transition-bg/trans-$i
+        convert $COPYBG -blur $A,$B $CACHEDIR/trans-$i
         local PERC=$(echo "($i+1) * 10" | bc -l)
         if [ "$VERBOSE" = true ]; then echo 'BLURME: '$PERC'%'; fi
         i=$[$i+1]
@@ -78,7 +125,7 @@ function create_images {
 
 function transinit {
 
-    local REF=$WORKINGDIR/transition-bg/trans-0
+    local REF=$CACHEDIR/trans-0
     local CMP=/tmp/blurme-trans-0.tmp
 
     if [ "$VERBOSE" = true ]; then
@@ -86,30 +133,22 @@ function transinit {
         echo 'BLURME: Unblurred original wallpaper is '$(cat $ORIGINAL)
     fi
 
-    if ! [ -d $WORKINGDIR/transition-bg ]; then
-        if [ "$VERBOSE" = true ]; then
-            echo "BLURME: Transition folder not found. Will create it and it's transition images."
+    # is it really necessary to render again
+    if [ -f $REF ]; then
+        convert $(cat $ORIGINAL) -blur 2.4,1.2 $CMP
+        # create new transition images if newly created trans-0 and old trans-0 are not the same
+        if ! cmp -s $CMP $REF; then
+            if [ "$VERBOSE" = true ]; then echo 'BLURME: Seems like we have a new wallpaper which needs to be rendered.'; fi
+            rm $CMP
+            create_images
+        else
+            if [ "$VERBOSE" = true ]; then echo 'BLURME: This background seems familiar. No need to render it again! :)'; fi
+            rm $CMP
         fi
-        mkdir $WORKINGDIR/transition-bg
-        create_images
     else
-        # is it really necessary to render again
-        if [ -f $REF ]; then
-            convert $(cat $ORIGINAL) -blur 2.4,1.2 $CMP
-            # create new transition images if newly created trans-0 and old trans-0 are not the same
-            if ! cmp -s $CMP $REF; then
-                if [ "$VERBOSE" = true ]; then
-                    echo 'BLURME: Seems like we have a new wallpaper which needs to be rendered.'
-                fi
-                rm $CMP
-                create_images
-            else
-                if [ "$VERBOSE" = true ]; then
-                    echo 'BLURME: This background seems familiar. No need to render it again! :)'
-                fi
-                rm $CMP
-            fi
-        fi
+        # reference file not found inside existing working dir ... better render them, to get things working
+        if [ "$VERBOSE" = true ]; then echo "BLURME: Could'nt find transition images in cachedir. Will create them on the fly."; fi
+        create_images
     fi
 }
 
@@ -120,7 +159,7 @@ function transition {
     local j="0"
 
     while [ $j -lt "10" ]; do
-        feh --bg-fill $WORKINGDIR/transition-bg/trans-$j
+        feh --bg-fill $CACHEDIR/trans-$j
         local PERC=$(echo "($j+1) * 10" | bc -l)
         if [ "$VERBOSE" = true ]; then echo 'BLURME: '$PERC'%'; fi
         j=$[$j+1]
@@ -136,7 +175,7 @@ function transition_rev {
     local j="9"
 
     while [ $j -ge "0" ]; do
-        feh --bg-fill $WORKINGDIR/transition-bg/trans-$j
+        feh --bg-fill $CACHEDIR/trans-$j
         local PERC=$(echo "($j+1) * 10" | bc -l)
         if [ "$VERBOSE" = true ]; then echo 'BLURME: '$PERC'%'; fi
         j=$[$j-1]
@@ -156,7 +195,9 @@ function finish {
 # Logic ------------------------------------------------------------------
 
 trap finish EXIT
+trap finish SIGHUP
 trap finish SIGINT
+trap finish SIGKILL
 trap finish SIGTERM
 
 transinit
@@ -168,9 +209,9 @@ while true; do
     CURRWALLPAPER=$(tail -n1 ~/.fehbg | cut -d "'" -f2)
 
     # is any window or rofi open on current workspace
-    if [[ $OPENWINDOWS > 0 ]] || [[ $(pidof rofi) > 0 ]]  || [[ $(pidof $ADDBLUR) > 0 ]]; then
+    if [[ $OPENWINDOWS > 0 ]] || [[ $(pgrep -cl rofi) > 0 ]]  || [[ $(pidof $ADDBLUR) > 0 ]]; then
         # is wallpaper not blurred
-        if [ "$CURRWALLPAPER" != "$WORKINGDIR/transition-bg/trans-9" ]; then
+        if [ "$CURRWALLPAPER" != "$CACHEDIR/trans-9" ]; then
             # has wallpaper been changed
             if [ "$CURRWALLPAPER" != "$(cat $ORIGINAL)" ]; then
                 # save current wallpapers path
@@ -193,4 +234,3 @@ while true; do
 
     sleep 0.5
 done
-
