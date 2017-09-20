@@ -29,7 +29,8 @@
 <p>There are several optional arguments provided that may be used. These include:</p>
 <ul>
     <li><b>-a</b>: Add another program (process name), which will start the blur effect</li>
-    <li><b>-d</b>: Set custom directory (defaul ~/.cache/blurme)</li>
+    <li><b>-c</b>: set custom directory for transition images (default: ~/.cache/blurme)</li>
+    <li><b>-d</b>: Set custom directory (defaul ~/.local/share/blurme)</li>
     <li><b>-t</b>: Set custom transition time in sec (default: 0.01)</li>
     <li><b>-v</b>: Show additional output (verbose)</li>
     <li><b>-h</b>: Show all these parameters</li>
