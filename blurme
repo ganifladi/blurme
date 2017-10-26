@@ -74,7 +74,7 @@ if [ "$VERBOSE" = true ]; then echo 'BLURME: Cache (contains transition images) 
 # This only fix only works when the workingdir and its containing
 # copy of the original not blurred background still exist
 # after reboot (no temp directory!).
-if [[ $(tail -n1 ~/.fehbg | cut -d "'" -f2) = "$CACHEDIR/trans-9" ]]; then
+if [[ $(tail -n1 ~/.fehbg | cut -d "'" -f6) = "$CACHEDIR/trans-9" ]]; then
     # Reset wallpaper to original one
     feh --bg-fill $(cat "$WORKINGDIR/original-bg")
 fi
@@ -89,7 +89,7 @@ CURRWORKSPACE=$(wmctrl -d | grep '*' | cut -d ' ' -f1)
 OPENWINDOWS=$(wmctrl -l | cut -d ' ' -f3 | grep $CURRWORKSPACE | wc -l)
 #echo "Open windows on workspace$CURRWORKSPACE: $WINDOWS"
 
-CURRWALLPAPER=$(tail -n1 ~/.fehbg | cut -d "'" -f2)
+CURRWALLPAPER=$(tail -n1 ~/.fehbg | cut -d "'" -f6)
 #echo "Wallpaper path: $CURRWALLPAPER"
 
 ORIGINAL=$WORKINGDIR/original-bg
@@ -206,7 +206,7 @@ while true; do
 
     CURRWORKSPACE=$(wmctrl -d | grep '*' | cut -d ' ' -f1)
     OPENWINDOWS=$(wmctrl -l | cut -d ' ' -f3 | grep $CURRWORKSPACE | wc -l)
-    CURRWALLPAPER=$(tail -n1 ~/.fehbg | cut -d "'" -f2)
+    CURRWALLPAPER=$(tail -n1 ~/.fehbg | cut -d "'" -f6)
 
     # is any window or rofi open on current workspace
     if [[ $OPENWINDOWS > 0 ]] || [[ $(pgrep -cl rofi) > 0 ]]  || [[ $(pidof $ADDBLUR) > 0 ]]; then
